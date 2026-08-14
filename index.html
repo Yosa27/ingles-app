@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="description" content="Aprende inglés de forma práctica: vocabulario, frases, pronunciación y más.">
+<title>English Go — Aprende inglés</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+
+<!-- ===================== NAVEGACIÓN ===================== -->
+<nav id="navbar" aria-hidden="true">
+  <button class="nav-btn" data-view="inicio">
+    <span class="nav-ico">🏠</span><span class="nav-txt">Inicio</span>
+  </button>
+  <button class="nav-btn" data-view="flashcards">
+    <span class="nav-ico">🃏</span><span class="nav-txt">Tarjetas</span>
+  </button>
+  <button class="nav-btn" data-view="practica">
+    <span class="nav-ico">✏️</span><span class="nav-txt">Practica</span>
+  </button>
+  <button class="nav-btn" data-view="escucha">
+    <span class="nav-ico">🔊</span><span class="nav-txt">Escucha</span>
+  </button>
+  <button class="nav-btn" data-view="frases">
+    <span class="nav-ico">💬</span><span class="nav-txt">Frases</span>
+  </button>
+  <button class="nav-btn" data-view="progreso">
+    <span class="nav-ico">📈</span><span class="nav-txt">Progreso</span>
+  </button>
+</nav>
+
+<!-- ===================== CONTENIDO ===================== -->
+<main id="app">
+
+  <!-- ---------- VISTA: INICIO ---------- -->
+  <section id="view-inicio" class="view">
+    <header class="hero">
+      <h1 class="logo">English <span>Go</span> 🇬🇧</h1>
+      <p id="greeting" class="greeting"></p>
+    </header>
+
+    <div class="card motiv-card">
+      <p>💬 <span id="motiv-hoy"></span></p>
+    </div>
+
+    <div id="level-card" class="card level-card">
+      <div class="level-badge">Nivel: <strong id="lvl-name">Sin definir</strong></div>
+      <p class="muted" id="lvl-desc">Haz el test de nivel para ver dónde empezar.</p>
+      <button class="btn btn-primary" id="btn-retoque-level">Hacer test de nivel</button>
+    </div>
+
+    <div class="card streak-card">
+      <div class="streak-emoji">🔥</div>
+      <div>
+        <div class="streak-num" id="streak-num">0</div>
+        <div class="muted">días seguidos practicando</div>
+      </div>
+      <div class="goal-box">
+        <div class="muted">Hoy: <span id="today-count">0</span>/<span id="goal-num">15</span></div>
+        <div class="goal-bar"><div id="goal-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="card recordatorio-card">
+      <h3>🔔 Recordatorio diario</h3>
+      <p class="muted">Elige una hora y la app te avisará con un mensaje motivacional para practicar.</p>
+      <div class="rem-row">
+        <label class="switch">
+          <input type="checkbox" id="rem-toggle">
+          <span class="slider"></span>
+        </label>
+        <input type="time" id="rem-time" value="19:00" class="input-time">
+      </div>
+      <div class="muted" id="rem-status"></div>
+    </div>
+
+    <h2 class="section-title">¿Qué practicamos hoy?</h2>
+    <div class="grid-cards">
+      <button class="card mode-card" data-go="flashcards">
+        <div class="mode-emoji">🃏</div>
+        <h3>Flashcards</h3>
+        <p>Palabras nuevas con repetición inteligente.</p>
+        <span class="badge" id="badge-pendientes">0 pendientes</span>
+      </button>
+      <button class="card mode-card" data-go="practica">
+        <div class="mode-emoji">✏️</div>
+        <h3>Escritura &amp; traducción</h3>
+        <p>Escribe y traduce para fijar lo que aprendes.</p>
+      </button>
+      <button class="card mode-card" data-go="escucha">
+        <div class="mode-emoji">🔊</div>
+        <h3>Escucha y pronunciación</h3>
+        <p>Audio real, repite en voz alta y entrena el oído.</p>
+      </button>
+      <button class="card mode-card" data-go="frases">
+        <div class="mode-emoji">💬</div>
+        <h3>Frases de conversación</h3>
+        <p>Frases útiles para el día a día y el trabajo.</p>
+      </button>
+    </div>
+  </section>
+
+  <!-- ---------- VISTA: FLASHCARDS ---------- -->
+  <section id="view-flashcards" class="view" hidden>
+    <header class="view-head">
+      <button class="back-btn" data-back="inicio">← Inicio</button>
+      <h2>Flashcards</h2>
+    </header>
+
+    <div id="fc-setup" class="card">
+      <h3>Elige tu sesión</h3>
+      <label class="label">Nuevas palabras</label>
+      <div class="chips" id="fc-cat-new"></div>
+      <label class="label">Por repasar (revisiones)</label>
+      <div class="review-info" id="review-info"></div>
+      <button class="btn btn-primary btn-block" id="btn-iniciar-fc">🎯 Empezar a estudiar</button>
+    </div>
+
+    <div id="fc-session" hidden>
+      <div class="fc-progress">
+        <span id="fc-count">0 / 0</span>
+        <div class="goal-bar"><div id="fc-fill"></div></div>
+      </div>
+      <div class="card flashcard" id="flashcard" onclick="flipCard(event)">
+        <div id="fc-side" class="fc-side">
+          <div class="fc-word" id="fc-word">word</div>
+          <button class="audio-btn" onclick="speakText(event, getFcText())">🔊 Escuchar</button>
+        </div>
+        <div class="fc-flip-hint">☝️ Toca la tarjeta para voltear</div>
+      </div>
+      <div id="fc-answer" class="fc-answer" hidden>
+        <div class="fc-translation" id="fc-trans"></div>
+        <div class="fc-example" id="fc-example"></div>
+      </div>
+      <div class="fc-actions" id="fc-actions" hidden>
+        <button class="btn btn-relearn" onclick="gradeCard(0)">🙈 No la sabía</button>
+        <button class="btn btn-hard" onclick="gradeCard(1)">🤔 Casi</button>
+        <button class="btn btn-good" onclick="gradeCard(2)">😎 La sabía</button>
+      </div>
+      <button class="btn btn-ghost btn-block" id="btn-fin-fc">Terminar sesión</button>
+    </div>
+  </section>
+
+  <!-- ---------- VISTA: PRÁCTICA (escritura / traducción) ---------- -->
+  <section id="view-practica" class="view" hidden>
+    <header class="view-head">
+      <button class="back-btn" data-back="inicio">← Inicio</button>
+      <h2>Escritura y traducción</h2>
+    </header>
+
+    <div class="card">
+      <h3>Dirección de la práctica</h3>
+      <div class="chips" id="dir-chips">
+        <button class="chip active" data-dir="both">Mezclado</button>
+        <button class="chip" data-dir="en-es">Inglés → Español</button>
+        <button class="chip" data-dir="es-en">Español → Inglés</button>
+      </div>
+      <label class="label">Tema</label>
+      <div class="chips" id="cat-chips"></div>
+      <button class="btn btn-primary btn-block" id="btn-iniciar-esc">🎯 Empezar sesión</button>
+    </div>
+
+    <div id="esc-session" hidden>
+      <div class="card">
+        <div class="esc-prompt">
+          <span class="esc-dir" id="esc-dir">Inglés → Español</span>
+          <button class="audio-btn" id="esc-audio">🔊</button>
+        </div>
+        <h3 class="esc-word" id="esc-word"></h3>
+        <input type="text" id="esc-input" class="input" placeholder="Escribe tu respuesta…" autocomplete="off">
+        <button class="btn btn-primary btn-block" id="btn-check-esc">Comprobar ✓</button>
+        <button class="btn btn-secondary btn-block" id="btn-skip-esc">No sé / mostrarla</button>
+        <div id="esc-feedback"></div>
+      </div>
+      <button class="btn btn-ghost btn-block" id="btn-fin-esc">Terminar sesión</button>
+    </div>
+  </section>
+
+  <!-- ---------- VISTA: ESCUCHA ---------- -->
+  <section id="view-escucha" class="view" hidden>
+    <header class="view-head">
+      <button class="back-btn" data-back="inicio">← Inicio</button>
+      <h2>Escucha y pronunciación</h2>
+    </header>
+
+    <div class="card">
+      <h3>Modo de práctica</h3>
+      <div class="chips" id="escuch-mode-chips">
+        <button class="chip active" data-mode="comprender">Comprender</button>
+        <button class="chip" data-mode="dictado">Dictado</button>
+        <button class="chip" data-mode="repetir">Repetir en voz alta</button>
+      </div>
+    </div>
+
+    <div id="escuch-session" hidden>
+      <div class="card escuchar-card">
+        <div class="esc-dir" id="escuch-title">Escucha y elige la respuesta</div>
+        <div class="escuch-play">
+          <button class="big-play" onclick="playCurrent(event)">🔊</button>
+          <div class="muted">Toca para escuchar las veces que quieras</div>
+        </div>
+        <div id="escuch-options"></div>
+        <div id="escuch-dictado" hidden>
+          <input type="text" id="escuch-input" class="input" placeholder="Escribe lo que escuchaste…" autocomplete="off">
+          <button class="btn btn-primary btn-block" id="btn-check-escuch">Comprobar ✓</button>
+        </div>
+        <div id="escuch-repetir" class="escuch-repetir" hidden>
+          <div class="muted">🔄 Repite la frase en voz alta antes de verla</div>
+          <button class="btn btn-secondary btn-block" id="btn-reveal-escuch">Mostrar la frase</button>
+        </div>
+        <div id="escuch-feedback"></div>
+      </div>
+      <button class="btn btn-ghost btn-block" id="btn-next-escuch">Siguiente ➜</button>
+      <button class="btn btn-ghost btn-block" id="btn-fin-escuch">Terminar sesión</button>
+    </div>
+  </section>
+
+  <!-- ---------- VISTA: FRASES ---------- -->
+  <section id="view-frases" class="view" hidden>
+    <header class="view-head">
+      <button class="back-btn" data-back="inicio">← Inicio</button>
+      <h2>Frases de conversación</h2>
+    </header>
+
+    <div class="chips chips-wrap" id="fr-sitios"></div>
+
+    <div id="fr-lista" class="fr-list"></div>
+
+    <div class="card phrase-tip">
+      <p>💡 <strong>Consejo práctico:</strong> escucha la frase en voz alta y repítela 3 veces. Úsala hoy mismo en una conversación real.</p>
+    </div>
+  </section>
+
+  <!-- ---------- VISTA: PROGRESO ---------- -->
+  <section id="view-progreso" class="view" hidden>
+    <header class="view-head">
+      <button class="back-btn" data-back="inicio">← Inicio</button>
+      <h2>Tu progreso</h2>
+    </header>
+
+    <div class="stats-row">
+      <div class="card stat"><div class="stat-num" id="st-words">0</div><div class="muted">palabras vistas</div></div>
+      <div class="card stat"><div class="stat-num" id="st-acierto">0%</div><div class="muted">precisión</div></div>
+      <div class="card stat"><div class="stat-num" id="st-dias">0</div><div class="muted">días activos</div></div>
+    </div>
+
+    <div class="card">
+      <h3>Nivel actual</h3>
+      <div class="level-current" id="level-current">—</div>
+      <button class="btn btn-secondary btn-block" id="btn-redo-test">Repetir test de nivel</button>
+    </div>
+
+    <div class="card motiv-meta">
+      <p>💬 <span id="motiv-progreso"></span></p>
+    </div>
+
+    <div class="card">
+      <h3>Últimos 7 días</h3>
+      <div class="week-chart" id="week-chart"></div>
+    </div>
+
+    <div class="card">
+      <h3>Sistema de repaso (cajas)</h3>
+      <p class="muted">Cada caja representa cuánto domina una palabra. Sube de caja cada vez que la aciertas y baja si la fallas.</p>
+      <div class="box-track" id="box-track"></div>
+    </div>
+
+    <div class="card">
+      <h3>Mis palabras difíciles</h3>
+      <div id="weak-words"></div>
+    </div>
+
+    <div class="card danger-zone">
+      <h3>Zona de riesgo</h3>
+      <p class="muted">Borra todo el avance y empieza desde cero.</p>
+      <button class="btn btn-danger" id="btn-reset">Borrar todo mi progreso</button>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast" aria-live="polite"></div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

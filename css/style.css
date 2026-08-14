@@ -157,6 +157,8 @@ input, textarea { -webkit-user-select:text; user-select:text; }
   background: var(--card-2); color:var(--acento-2);
   font-size:11px; padding:3px 8px; border-radius:99px; font-weight:600;
 }
+.add-content-card { cursor:pointer; }
+.add-content-card:active { transform: scale(.98); }
 
 /* ===================== BOTONES ===================== */
 .btn {
@@ -278,10 +280,11 @@ input, textarea { -webkit-user-select:text; user-select:text; }
   display:flex; align-items:center; justify-content:center; padding:20px;
 }
 .modal {
-  background:var(--card); border:1px solid var(--borde); border-radius:var(--radio);
+  background: var(--card); border:1px solid var(--borde); border-radius:var(--radio);
   padding:24px; width:100%; max-width:420px; box-shadow:var(--sombra);
-  text-align:center;
+  text-align:center; max-height:84vh; overflow-y:auto;
 }
+.modal-wide { max-width: 460px; }
 .modal h2 { margin-bottom:10px; }
 .modal p { color:var(--muted); font-size:14px; line-height:1.5; margin-bottom:16px; }
 .modal-opt { display:block; width:100%; }

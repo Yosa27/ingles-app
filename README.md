@@ -16,6 +16,11 @@ test de nivel y repetición espaciada. Tu progreso se guarda en el navegador.
 | 📈 **Progreso** | Racha diaria 🔥, precisión, palabras difíciles, gráfica de 7 días |
 | 🔔 **Recordatorio** | Notificación diaria con mensaje motivacional a la hora que elijas |
 | 💬 **Motivación** | Mensajes que se adaptan a tu racha, precisión y constancia |
+| ➕ **Mis palabras y temas** | Crea tus propios temas y agrega tus palabras desde la app |
+
+### Temas incluidos
+
+- 🛒 **Cotidiano** · 💼 **Trabajo** · 🔢 **Números y cantidades** · ⏰ **Horas y tiempo**
 
 Los temas incluyen **cotidiano** (comida, compras, casa, salud, viajes) y
 **trabajo** (reuniones, correos, correos comerciales, phrasal verbs).

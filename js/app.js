@@ -12,12 +12,26 @@
     state: "eg_state",
     days: "eg_days",
     phrase: "eg_phrase",
+    custom: "eg_custom",
   };
 
   let SRS = loadJSON(LS.words, {});          // id -> {box,due,ok,n,last}
   let STATE = loadJSON(LS.state, {});        // level, levelIdx, goal
   let DAYS = loadJSON(LS.days, {});          // "YYYY-MM-DD" -> {n, ids[]}
   let PHRASE = loadJSON(LS.phrase, {});      // situacion -> count correct
+  let CUSTOM = loadJSON(LS.custom, { temas: [], palabras: [] });
+
+  function saveCustom() { localStorage.setItem(LS.custom, JSON.stringify(CUSTOM)); }
+
+  // Palabras base + personalizadas, y categorías disponibles (base + temas propios)
+  function getAllWords() {
+    return VOCAB.concat(CUSTOM.palabras || []);
+  }
+  function getAllCat() {
+    const c = CATEGORIAS.slice();
+    (CUSTOM.temas || []).forEach(t => c.push({ clave: t.id, nombre: t.nombre }));
+    return c;
+  }
 
   function loadJSON(k, def) {
     try { const v = JSON.parse(localStorage.getItem(k)); return v === null || v === undefined ? def : v; }
@@ -361,11 +375,12 @@
 
     const molde = document.getElementById("motiv-hoy");
     if (molde && !molde.textContent) molde.textContent = getMotiv();
+    refrescarInicio();
     renderRemUI();
   }
 
   function countPendientes() {
-    return VOCAB.filter(v => unlocked(v) && !SRS[v.id]).length;
+    return getAllWords().filter(v => unlocked(v) && !SRS[v.id]).length;
   }
 
   document.getElementById("btn-retoque-level").addEventListener("click", openTest);
@@ -499,7 +514,7 @@
 
   function renderFCSetup() {
     buildCatChips();
-    const due = VOCAB.filter(v => SRS[v.id] && SRS[v.id].box >= 1 && dueToday(SRS[v.id].due));
+    const due = getAllWords().filter(v => SRS[v.id] && SRS[v.id].box >= 1 && dueToday(SRS[v.id].due));
     document.getElementById("review-info").innerHTML =
       `<div class="muted">${due.length} revisión(es) pendiente(s) hoy.</div>`;
     document.getElementById("btn-iniciar-fc").onclick = startFCSession;
@@ -510,11 +525,12 @@
   function buildCatChips() {
     const c = document.getElementById("fc-cat-new");
     c.innerHTML = "";
-    [["ambos", "Ambos"], ["cotidiano", "Cotidiano"], ["trabajo", "Trabajo"]].forEach(([k, n]) => {
+    const lista = [{ clave: "ambos", nombre: "Ambos" }].concat(getAllCat());
+    lista.forEach(({ clave, nombre }) => {
       const chip = document.createElement("button");
-      chip.className = "chip" + (k === "ambos" ? " active" : "");
-      chip.textContent = n;
-      chip.dataset.cat = k;
+      chip.className = "chip" + (clave === "ambos" ? " active" : "");
+      chip.textContent = nombre;
+      chip.dataset.cat = clave;
       chip.onclick = () => {
         c.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
         chip.classList.add("active");
@@ -530,7 +546,7 @@
 
   function startFCSession() {
     const cat = selectedCat();
-    const pool = VOCAB.filter(v => unlocked(v) && (cat === "ambos" || v.cat === cat));
+    const pool = getAllWords().filter(v => unlocked(v) && (cat === "ambos" || v.cat === cat));
     const news = shuffle(pool.filter(v => !SRS[v.id]));
     const dues = shuffle(pool.filter(v => SRS[v.id] && SRS[v.id].box >= 1 && dueToday(SRS[v.id].due)));
     fc.queue = news.slice(0, 12).concat(dues.slice(0, 15));
@@ -609,11 +625,12 @@
   function buildEscChips() {
     const c = document.getElementById("cat-chips");
     c.innerHTML = "";
-    [["ambos", "Ambos"], ["cotidiano", "Cotidiano"], ["trabajo", "Trabajo"]].forEach(([k, n]) => {
+    const lista = [{ clave: "ambos", nombre: "Ambos" }].concat(getAllCat());
+    lista.forEach(({ clave, nombre }) => {
       const chip = document.createElement("button");
-      chip.className = "chip" + (k === "ambos" ? " active" : "");
-      chip.textContent = n;
-      chip.dataset.cat = k;
+      chip.className = "chip" + (clave === "ambos" ? " active" : "");
+      chip.textContent = nombre;
+      chip.dataset.cat = clave;
       chip.onclick = () => {
         c.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
         chip.classList.add("active");
@@ -633,7 +650,7 @@
   function startEscSession() {
     const chip = document.querySelector("#cat-chips .chip.active");
     const cat = chip ? chip.dataset.cat : "ambos";
-    const pool = VOCAB.filter(v => unlocked(v) && (cat === "ambos" || v.cat === cat));
+    const pool = getAllWords().filter(v => unlocked(v) && (cat === "ambos" || v.cat === cat));
     esc.queue = shuffle(pool).slice(0, 12);
     esc.cur = 0;
     if (esc.queue.length === 0) return;
@@ -744,7 +761,7 @@
   function startEscuchSession() {
     escuch.cur = 0;
     if (escuch.mode === "comprender") {
-      escuch.queue = shuffle(VOCAB.filter(v => unlocked(v))).slice(0, 10);
+      escuch.queue = shuffle(getAllWords().filter(v => unlocked(v))).slice(0, 10);
     } else {
       const all = Object.keys(PHRASES).reduce((acc, k) => acc.concat(PHRASES[k].frases.map(f => ({ en: f.en, es: f.es }))), []);
       escuch.queue = shuffle(all).slice(0, 10);
@@ -770,7 +787,7 @@
     document.getElementById("escuch-repetir").hidden = true;
     document.getElementById("escuch-feedback").innerHTML = "";
 
-    const dist = shuffle(VOCAB.filter(v => v.id !== item.id && v.cat === item.cat)).slice(0, 3);
+    const dist = shuffle(getAllWords().filter(v => v.id !== item.id && v.cat === item.cat)).slice(0, 3);
     const opts = shuffle(dist.map(d => d.es).concat([item.es]));
     document.getElementById("escuch-options").innerHTML = opts.map((op, i) =>
       `<button class="btn btn-secondary" data-es="${escJS(op)}" style="margin-top:8px;width:100%;text-align:left">${op}</button>`).join("");
@@ -1007,7 +1024,7 @@
       `<div class="box ${i === 5 ? "master" : ""}"><div class="box-num">${b}</div><div class="box-name">${names[i]}</div></div>`).join("");
 
     // Palabras difíciles
-    const weak = VOCAB.filter(v => SRS[v.id] && SRS[v.id].box <= 2 && SRS[v.id].last)
+    const weak = getAllWords().filter(v => SRS[v.id] && SRS[v.id].box <= 2 && SRS[v.id].last)
       .sort((a, b) => (SRS[a.id].ok || 0) - (SRS[b.id].ok || 0))
       .slice(0, 8);
     const wc = document.getElementById("weak-words");
@@ -1030,6 +1047,161 @@
       go("inicio");
     }
   });
+
+  // ============================================================
+  //  MIS PALABRAS Y TEMAS
+  // ============================================================
+  document.getElementById("btn-add-content").addEventListener("click", openAddModal);
+
+  function openAddModal() {
+    let back = document.getElementById("modal-add");
+    if (back) back.remove();
+    back = document.createElement("div");
+    back.className = "modal-back";
+    back.id = "modal-add";
+    document.body.appendChild(back);
+    renderAddModal(back);
+  }
+
+  function renderAddModal(back) {
+    const temas = CUSTOM.temas || [];
+    const palabras = CUSTOM.palabras || [];
+
+    back.innerHTML = `
+      <div class="modal modal-wide">
+        <h2>➕ Mis palabras y temas</h2>
+
+        <div style="text-align:left">
+          <label class="label">Mis temas</label>
+          <div id="add-temas"></div>
+          <div class="rem-row" style="margin-top:10px">
+            <input type="text" id="add-tema-input" class="input" style="margin:0;flex:1" placeholder="Nuevo tema… ej. Salud, Viajes, Gastronomía">
+            <button class="btn btn-primary" id="btn-add-tema">Crear tema</button>
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--borde);margin:16px 0">
+
+        <div style="text-align:left">
+          <label class="label">Agregar palabra a un tema</label>
+          <select id="add-select-tema" class="input" style="margin:0 0 8px"></select>
+          <input type="text" id="add-en" class="input" placeholder="En inglés… ej. appointment">
+          <input type="text" id="add-es" class="input" placeholder="En español… ej. cita">
+          <input type="text" id="add-ej" class="input" placeholder="Ejemplo en inglés (opcional)…">
+          <button class="btn btn-primary btn-block" id="btn-add-word">Agregar palabra</button>
+        </div>
+
+        <div style="text-align:left;margin-top:16px">
+          <label class="label">Mis palabras (${palabras.length})</label>
+          <div id="add-lista"></div>
+        </div>
+
+        <button class="btn btn-secondary modal-opt" id="btn-close-add" style="margin-top:16px">Cerrar</button>
+      </div>`;
+
+    // Lista de temas con eliminar
+    const temasDiv = back.querySelector("#add-temas");
+    if (temas.length === 0) {
+      temasDiv.innerHTML = `<div class="muted">Aún no tienes temas. Crea el primero arriba. 🚀</div>`;
+    } else {
+      temasDiv.innerHTML = temas.map(t =>
+        `<div class="weak-item"><div style="font-weight:700">🏷️ ${escHTML(t.nombre)}</div>
+         <button class="btn btn-danger" style="padding:4px 10px;font-size:12px" data-del-tema="${t.id}">Eliminar</button></div>`).join("");
+    }
+
+    // Select de temas
+    const sel = back.querySelector("#add-select-tema");
+    if (temas.length === 0) {
+      sel.innerHTML = `<option value="">Primero crea un tema ☝️</option>`;
+    } else {
+      sel.innerHTML = temas.map(t => `<option value="${t.id}">${escHTML(t.nombre)}</option>`).join("");
+    }
+
+    // Lista de palabras propias
+    const lista = back.querySelector("#add-lista");
+    if (palabras.length === 0) {
+      lista.innerHTML = `<div class="muted">Agrega tus primeras palabras con el formulario de arriba.</div>`;
+    } else {
+      lista.innerHTML = palabras.map(w => {
+        const tema = temas.find(t => t.id === w.cat);
+        return `<div class="weak-item">
+          <div><div class="w-en">${escHTML(w.en)} <button class="audio-btn" onclick="speakText(event,'${escJS(w.en)}')">🔊</button></div>
+          <div class="w-es">${escHTML(w.es)}${tema ? " · " + escHTML(tema.nombre) : ""}</div></div>
+          <button class="btn btn-danger" style="padding:4px 10px;font-size:12px" data-del-word="${w.id}">✕</button>
+        </div>`;
+      }).join("");
+    }
+
+    back.querySelector("#btn-add-tema").addEventListener("click", () => {
+      const val = back.querySelector("#add-tema-input").value.trim();
+      if (!val) return toast("Escribe un nombre para el tema. ✍️");
+      CUSTOM.temas.push({ id: "tema_" + Date.now(), nombre: val });
+      saveCustom();
+      renderAddModal(back);
+    });
+
+    back.querySelector("#btn-add-word").addEventListener("click", () => {
+      const temaId = sel.value;
+      const en = back.querySelector("#add-en").value.trim();
+      const es = back.querySelector("#add-es").value.trim();
+      if (!temaId) return toast("Primero crea un tema. 🏷️");
+      if (!en || !es) return toast("Faltan inglés o español. ✍️");
+      const ej = back.querySelector("#add-ej").value.trim();
+      CUSTOM.palabras.push({
+        id: "my_" + Date.now(), en: en, es: es,
+        ej: ej || "…", ex: ej ? "" : "…",
+        niv: 1, cat: temaId,
+      });
+      saveCustom();
+      renderAddModal(back);
+    });
+
+    back.querySelectorAll("[data-del-tema]").forEach(b => {
+      b.addEventListener("click", () => {
+        const id = b.dataset.delTema;
+        if (!confirm("¿Eliminar este tema y sus palabras?")) return;
+        const borradas = (CUSTOM.palabras || []).filter(w => w.cat === id).map(w => w.id);
+        CUSTOM.temas = CUSTOM.temas.filter(t => t.id !== id);
+        CUSTOM.palabras = CUSTOM.palabras.filter(w => w.cat !== id);
+        borradas.forEach(wid => { delete SRS[wid]; });
+        saveWords();
+        saveCustom();
+        renderAddModal(back);
+        refrescarInicio();
+      });
+    });
+
+    back.querySelectorAll("[data-del-word]").forEach(b => {
+      b.addEventListener("click", () => {
+        const id = b.dataset.delWord;
+        CUSTOM.palabras = CUSTOM.palabras.filter(w => w.id !== id);
+        delete SRS[id];
+        saveWords();
+        saveCustom();
+        renderAddModal(back);
+        refrescarInicio();
+      });
+    });
+
+    back.querySelector("#btn-close-add").addEventListener("click", () => {
+      back.remove();
+      refrescarInicio();
+    });
+  }
+
+  function refrescarInicio() {
+    const el = document.getElementById("badge-custom");
+    if (el) el.textContent = (CUSTOM.palabras ? CUSTOM.palabras.length : 0) + " palabras propias";
+    const pend = document.getElementById("badge-pendientes");
+    if (pend) {
+      const p = countPendientes();
+      pend.textContent = p > 0 ? p + " pendientes" : "0 pendientes";
+    }
+  }
+
+  function escHTML(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
 
   // ============================================================
   //  AYUDAS

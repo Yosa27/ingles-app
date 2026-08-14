@@ -631,7 +631,8 @@
   });
 
   function startEscSession() {
-    const cat = (document.querySelector("#cat-chips .chip.active") || {}).dataset || "ambos";
+    const chip = document.querySelector("#cat-chips .chip.active");
+    const cat = chip ? chip.dataset.cat : "ambos";
     const pool = VOCAB.filter(v => unlocked(v) && (cat === "ambos" || v.cat === cat));
     esc.queue = shuffle(pool).slice(0, 12);
     esc.cur = 0;

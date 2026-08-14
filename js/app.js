@@ -599,7 +599,7 @@
   // ============================================================
   //  ESCRITURA Y TRADUCCIÓN
   // ============================================================
-  let esc = { queue: [], cur: 0, dir: "both" };
+  let esc = { queue: [], cur: 0, dir: "both", modo: "responder" };
 
   function renderEscSetup() {
     buildEscChips();
@@ -642,7 +642,7 @@
   }
 
   document.getElementById("btn-iniciar-esc").addEventListener("click", startEscSession);
-  document.getElementById("btn-check-esc").addEventListener("click", checkEsc);
+  document.getElementById("btn-check-esc").addEventListener("click", onEscBtn);
   document.getElementById("btn-skip-esc").addEventListener("click", skipEsc);
   document.getElementById("btn-fin-esc").addEventListener("click", finishEscSession);
 
@@ -657,11 +657,14 @@
     if (esc.cur >= esc.queue.length) return finishEscSession();
     const v = esc.queue[esc.cur];
     const dir = escDir();
+    esc.modo = "responder";
     document.getElementById("esc-dir").textContent =
       dir === "en-es" ? "Inglés → Español" : "Español → Inglés";
     document.getElementById("esc-word").textContent = dir === "en-es" ? v.en : v.es;
     document.getElementById("esc-audio").style.display = dir === "en-es" ? "inline-block" : "none";
     document.getElementById("esc-input").value = "";
+    document.getElementById("esc-input").disabled = false;
+    document.getElementById("btn-check-esc").textContent = "Comprobar ✓";
     document.getElementById("esc-input").focus();
     document.getElementById("esc-feedback").innerHTML = "";
   }
@@ -671,7 +674,12 @@
     if (v) speakEN(v.en);
   });
 
-  function checkEsc() {
+  function onEscBtn() {
+    if (esc.modo === "avanzar") {
+      esc.cur++;
+      showEscCard();
+      return;
+    }
     const v = esc.queue[esc.cur];
     if (!v) return;
     const user = document.getElementById("esc-input").value;
@@ -688,31 +696,22 @@
       fb.innerHTML = `<div class="fb-mal"><strong>✗ Te faltó.</strong><br>Respuesta: ${answer}<br>${v.es}</div><div class="muted" style="margin-top:6px">${v.ej} → ${v.ex}</div>`;
       speakEN(v.en);
     }
+    esc.modo = "avanzar";
     document.getElementById("btn-check-esc").textContent = "Siguiente ➜";
-    document.getElementById("btn-check-esc").onclick = () => {
-      esc.cur++;
-      document.getElementById("btn-check-esc").textContent = "Comprobar ✓";
-      document.getElementById("btn-check-esc").onclick = checkEsc;
-      showEscCard();
-    };
   }
 
   function skipEsc() {
     const v = esc.queue[esc.cur];
-    if (v) {
-      gradeWord(v.id, 0);
-      document.getElementById("esc-feedback").innerHTML =
-        `<div class="fb-mal">Respuesta: <strong>${document.getElementById("esc-dir").textContent.startsWith("Inglés") ? v.es : v.en}</strong></div><div class="muted" style="margin-top:6px">${v.ej} → ${v.ex}</div>`;
-    }
-    document.getElementById("esc-input").disabled = true;
-    document.getElementById("btn-check-esc").textContent = "Siguiente ➜";
-    document.getElementById("btn-check-esc").onclick = () => {
-      document.getElementById("esc-input").disabled = false;
-      esc.cur++;
-      document.getElementById("btn-check-esc").textContent = "Comprobar ✓";
-      document.getElementById("btn-check-esc").onclick = checkEsc;
-      showEscCard();
-    };
+    if (!v) return;
+    gradeWord(v.id, 0);
+    const dir = document.getElementById("esc-dir").textContent;
+    const answer = dir.startsWith("Inglés") ? v.es : v.en;
+    document.getElementById("esc-feedback").innerHTML =
+      `<div class="fb-mal">La respuesta era: <strong>${answer}</strong></div>` +
+      `<div class="muted" style="margin-top:6px">${v.ej} → ${v.ex}</div>` +
+      `<div class="muted" style="margin-top:6px">💡 Ahora escribe la respuesta para practicar la ortografía y presiona "Comprobar ✓".</div>`;
+    document.getElementById("esc-input").disabled = false;
+    document.getElementById("esc-input").focus();
   }
 
   function finishEscSession() {

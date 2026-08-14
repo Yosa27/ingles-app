@@ -328,6 +328,7 @@
     b.addEventListener("click", () => go(b.dataset.go)));
   document.querySelectorAll("[data-back]").forEach(b =>
     b.addEventListener("click", () => go(b.dataset.back)));
+  navBtns.forEach(b => b.addEventListener("click", () => go(b.dataset.view)));
 
   // ============================================================
   //  INICIO
@@ -389,11 +390,19 @@
 
   function modalHTML() { return document.getElementById("modal-test"); }
 
+  function crearModalBack() {
+    const div = document.createElement("div");
+    div.className = "modal-back";
+    div.id = "modal-test";
+    document.body.appendChild(div);
+    return div;
+  }
+
   function askNext() {
     const pool = TEST_LEVELS[t.levelIdx].preguntas;
     const q = pool.find(qq => t.seen.indexOf(qq) === -1);
     if (!q) {
-      const back = modalHTML() || document.querySelector(".modal-back");
+      const back = modalHTML();
       if (back) return terminarTest(back);
       return finishTestModal();
     }
@@ -401,11 +410,8 @@
     t.asked++;
     const max = 10;
 
-    let html = "";
-    if (!modalHTML()) {
-      html += `<div class="modal-back" id="modal-test">`;
-    }
-    html += `
+    const back = modalHTML() || crearModalBack();
+    back.innerHTML = `
       <div class="modal">
         <h2>🧠 Test de nivel</h2>
         <p class="muted">Pregunta ${t.asked} de ${max}</p>
@@ -417,10 +423,6 @@
         </div>
         <div id="test-feedback"></div>
       </div>`;
-    if (modalHTML()) modalHTML().innerHTML = "";
-
-    const back = document.querySelector(".modal-back");
-    back.innerHTML = html;
 
     back.querySelectorAll("#test-options .btn").forEach(btn => {
       btn.addEventListener("click", () => answerTest(q, btn, back), { once: true });
